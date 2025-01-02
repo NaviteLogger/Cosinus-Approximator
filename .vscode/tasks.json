@@ -1,0 +1,37 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build_unix",
+            "type": "shell",
+            "command": ".vscode/build_unix.sh",
+            "args": [
+                "${fileDirname}",
+                "${file}"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "build_win",
+            "type": "shell",
+            "command": ".vscode/build_win.ps1",
+            "args": [
+                "${fileDirname}",
+                "${file}"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        }
+    ]
+}

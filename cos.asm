@@ -9,29 +9,35 @@ cos_asm:
 	push ebp
 	mov ebp, esp
 
-    mov ecx, n
-
     finit ; Init FPU
-    fld1 ; push 1 (initial return value)
+    fldz ; push 1 (initial return value)
+    mov ecx, n; number of iterations
 
     mov edx, 0
 
     jmp cos_loop
 
 cos_loop:
-    ; st0 = pow(x, n)/ n! + st0
-    cmp ecx, 0
-    je return
+    push eax       ; Save the term index (n)
 
-    call power ; fpu: pow(x, ecx), n!
-    call silnia ; fpu: ecx!
+    shl eax, 1     ; eax = 2 * n (calculate 2n)
+    push eax
+    call power     ; Compute x^(2n)
+    add esp, 4     ; Cleanup stack
 
-    fdivp ; pow(x, n)/n!
+    push eax
+    call silnia    ; Compute (2n)!
+    add esp, 4     ; Cleanup stack
 
-    faddp ; st0  = st0 + pow(x, n)/n!
+    fdivp          ; x^(2n) / (2n)!
 
-    dec ecx
-    jmp cos_loop
+    ; Apply the alternating sign (-1)^n
+    mov eax, [esp] ; Get n back
+    and eax, 1     ; Check if n is odd or even
+    cmp eax, 0
+    je add_term    ; If even, add the term
+
+    fchs           ; If odd, negate the term
 
 return:
     leave
@@ -78,6 +84,18 @@ silnia_loop:
 
     dec ecx
     jmp silnia_loop
+
+add_term:
+    faddp          ; Add the current term to the total
+    pop eax        ; Restore n
+    inc eax        ; Increment n for the next term
+
+cos_loop_check:
+    cmp eax, ecx   ; Check if we've computed all terms
+    jl cos_loop
+
+    leave
+    ret
 
 raw_ret:
     ret
