@@ -3,6 +3,7 @@
 /*
 nasm -f elf32 projekt.asm -o projekt.o
 gcc -m32 projekt.c projekt.o -o projekt.exe
+clear
 ./projekt.exe
 */
 
