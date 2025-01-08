@@ -1,16 +1,5 @@
 #include <stdio.h>
 
-// Każdy projekt powinien posiadać interfejs napisany
-// w języku C (wprowadzanie danych z klawiatury, wypisywanie
-// ich na ekran, nieskończona pętla programu itp.) oraz mieć
-// logikę biznesową napisaną w asemblerze z wykorzystaniem
-// FPU. Dodatkowo, każdy projekt powinien móc przyjąć
-// dodatkowy argument w postaci liczby miejsc po przecinku, do
-// której ma być zaokrąglony wynik. Liczbę tę podaje użytkownik
-// z klawiatury.
-// Napisać program, który oblicza e^x, gdzie x jest
-// argumentem podanym przez użytkownika.
-
 #define MAX_VAL(type) ((type)((1U << (sizeof(type) * 8 - 1)) - 1))
 
 void clearInvalidInput() {
@@ -18,45 +7,40 @@ void clearInvalidInput() {
     ;
 }
 
-extern float cos_asm(float x, int accuracy) asm(
-    "cos_asm"); // explicitly tell GCC name of the asm function to use
+extern float cos_asm(float x, int accuracy) asm("cos_asm");
 
 int main() {
-  printf("Cosinus calculator");
+  printf("Kalkulator funkcji cos(x) z wykorzystaniem rozwinięcia w szereg "
+         "Taylora\n");
   do {
-    long double x;
-    unsigned int accuracy, isInputValid;
-    printf("\nArgument: ");
+    long double x = 0;
+    unsigned int accuracy = 0, isInputValid = 0;
+    printf("\nArgument funkcji cosinus: ");
     isInputValid = scanf("%Lf", &x);
 
     if (isInputValid == 0) {
-      printf("Couldn't parse x!\n");
+      printf("Nie można przetworzyć argumentu!\n");
       clearInvalidInput();
-      continue;
-    } else if (x < 0 || x > MAX_VAL(float)) {
-      printf("Value of x must be greater than 0 and less than %f\n",
-             MAX_VAL(float));
       continue;
     }
 
-    printf("Input accuracy (number of taylor series terms)\n");
-    printf("Value: ");
+    printf("Liczba cyfr po przecinku: ");
     isInputValid = scanf("%d", &accuracy);
 
     if (isInputValid == 0) {
-      printf("Couldn't parse accuracy!\n");
+      printf("Nie można przetworzyć liczby cyfr po przecinku!\n");
       clearInvalidInput();
       continue;
     } else if (accuracy < 0 || accuracy > MAX_VAL(unsigned int)) {
-      printf("Accuracy must be greater than 0 and less than %d\n",
+      printf("Liczba cyfr po przecinku musi być z zakresu [0, %u]!\n",
              MAX_VAL(unsigned int));
       continue;
     }
 
-    float result = cos_asm(x, accuracy);
-    printf("e^x = ~%.*f\n", accuracy, result);
+    float result = cos_asm(x, 20);
+    printf("cos(x) = ~%.*f\n", accuracy, result);
 
-    printf("Continue? (y/n) ");
+    printf("Czy kontynuować? (y/n) ");
     char c;
     scanf(" %c", &c);
     if (c != 'y' && c != 'Y') {

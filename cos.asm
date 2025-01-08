@@ -2,50 +2,92 @@ global cos_asm
 global silnia
 global power
 
-%idefine x [ebp + 8] ; float is 2 byte
-%idefine n [ebp + 12] ; int is 1 byte
+; We reuse your approach of "n = 20" terms total.
+; That means we approximate cos(x) with 20 terms of the series.
+%idefine x [ebp + 8]  ; 'x' is at [ebp+8]
+%idefine n 20
+
+; -----------------------------
+; cos(x) = sum_{k=0}^{∞} [(-1)^k * x^(2k) / (2k)!]
+; We truncate at k = 20.
+; -----------------------------
 
 cos_asm:
-	push ebp
-	mov ebp, esp
+    push ebp
+    mov  ebp, esp
 
-    finit ; Init FPU
-    fldz ; push 1 (initial return value)
-    mov ecx, n; number of iterations
-
-    mov edx, 0
+    mov  ecx, n          ; We'll count down from 20 to 1 for the series
+    finit                ; Initialize the FPU
+    fld1                 ; st(0) <- 1.0  (this is our running sum, includes k=0 term)
 
     jmp cos_loop
 
 cos_loop:
-    push eax       ; Save the term index (n)
+    cmp ecx, 0
+    je  return           ; If ecx == 0, we are done
 
-    shl eax, 1     ; eax = 2 * n (calculate 2n)
-    push eax
-    call power     ; Compute x^(2n)
-    add esp, 4     ; Cleanup stack
+    ;------------------------------------
+    ; 1) Compute x^(2*ecx)
+    ;    We do this by temporarily storing 2*ecx in 'edx'
+    ;    then moving that into 'ecx' so that 'power' sees the right exponent.
+    ;------------------------------------
+    mov edx, ecx
+    shl edx, 1           ; edx = 2 * ecx
 
-    push eax
-    call silnia    ; Compute (2n)!
-    add esp, 4     ; Cleanup stack
+    push ecx             ; save the loop counter
+    mov  ecx, edx        ; ecx <- 2*ecx
+    call power           ; => FPU top = x^(2*old_ecx)
+    pop ecx              ; restore the loop counter
 
-    fdivp          ; x^(2n) / (2n)!
+    ;------------------------------------
+    ; 2) Compute (2*ecx)!
+    ;    Same trick with 'edx'
+    ;------------------------------------
+    mov edx, ecx
+    shl edx, 1           ; edx = 2 * ecx
 
-    ; Apply the alternating sign (-1)^n
-    mov eax, [esp] ; Get n back
-    and eax, 1     ; Check if n is odd or even
-    cmp eax, 0
-    je add_term    ; If even, add the term
+    push ecx
+    mov  ecx, edx
+    call silnia          ; => FPU top = (2*old_ecx)!
+    pop ecx
 
-    fchs           ; If odd, negate the term
+    ;------------------------------------
+    ; 3) Divide: x^(2k) / (2k)!
+    ;------------------------------------
+    fdivp    ; st(1) = st(1) / st(0), pop st(0)
+
+    ;------------------------------------
+    ; 4) Apply (-1)^k
+    ;    If k is odd, flip the sign
+    ;------------------------------------
+    test ecx, 1
+    jz  add_term
+    fchs            ; flip sign if ecx is odd
+
+add_term:
+    ;------------------------------------
+    ; 5) Accumulate into our running sum
+    ;------------------------------------
+    faddp           ; st(1) = st(1) + st(0), pop st(0)
+
+    ;------------------------------------
+    ; 6) Decrement ecx and repeat
+    ;------------------------------------
+    dec ecx
+    jmp cos_loop
 
 return:
     leave
     jmp raw_ret
 
+; --------------------------------------
+; Below are unchanged from your e^x code
+; except for the label names.
+; --------------------------------------
+
 power:
     push ecx
-    fld1 ; initial return value
+    fld1                ; Initialize return value to 1.0
 
     call power_loop
 
@@ -58,14 +100,12 @@ power_loop:
 
     fld dword x
     fmulp
-
     dec ecx
     jmp power_loop
 
 silnia:
     push ecx
-
-    fld1 ; initial return value
+    fld1                ; Initialize return value to 1.0
 
     call silnia_loop
 
@@ -77,25 +117,12 @@ silnia_loop:
     jle raw_ret
 
     push ecx
-    fild dword [esp]
+    fild dword [esp]    ; Load ecx as float
     pop ecx
 
-    fmulp ; (prev + 1)*prev
-
+    fmulp               ; Multiply top of FPU stack by this integer
     dec ecx
     jmp silnia_loop
-
-add_term:
-    faddp          ; Add the current term to the total
-    pop eax        ; Restore n
-    inc eax        ; Increment n for the next term
-
-cos_loop_check:
-    cmp eax, ecx   ; Check if we've computed all terms
-    jl cos_loop
-
-    leave
-    ret
 
 raw_ret:
     ret
