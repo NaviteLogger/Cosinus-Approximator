@@ -1,0 +1,4 @@
+ARKO_2425_P2_G2_MarekKacprzak_223287
+Temat numer: 2
+Treść: 02. Napisać program, który oblicza cos(x), gdzie x jest
+argumentem podanym przez użytkownika

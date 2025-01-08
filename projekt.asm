@@ -2,23 +2,22 @@ global cos_asm
 global silnia
 global power
 
-; We reuse your approach of "n = 20" terms total.
-; That means we approximate cos(x) with 20 terms of the series.
+; Approximate cos(x) with 20 terms of the series.
 %idefine x [ebp + 8]  ; 'x' is at [ebp+8]
 %idefine n 20
 
 ; -----------------------------
 ; cos(x) = sum_{k=0}^{∞} [(-1)^k * x^(2k) / (2k)!]
-; We truncate at k = 20.
+; Truncate at k = 20.
 ; -----------------------------
 
 cos_asm:
     push ebp
     mov  ebp, esp
 
-    mov  ecx, n          ; We'll count down from 20 to 1 for the series
+    mov  ecx, n          ; Count down from 20 to 1 for the series
     finit                ; Initialize the FPU
-    fld1                 ; st(0) <- 1.0  (this is our running sum, includes k=0 term)
+    fld1                 ; st(0) <- 1.0  (this is the running sum, includes k=0 term)
 
     jmp cos_loop
 
@@ -28,7 +27,7 @@ cos_loop:
 
     ;------------------------------------
     ; 1) Compute x^(2*ecx)
-    ;    We do this by temporarily storing 2*ecx in 'edx'
+    ;    Do this by temporarily storing 2*ecx in 'edx'
     ;    then moving that into 'ecx' so that 'power' sees the right exponent.
     ;------------------------------------
     mov edx, ecx
@@ -79,11 +78,6 @@ add_term:
 return:
     leave
     jmp raw_ret
-
-; --------------------------------------
-; Below are unchanged from your e^x code
-; except for the label names.
-; --------------------------------------
 
 power:
     push ecx

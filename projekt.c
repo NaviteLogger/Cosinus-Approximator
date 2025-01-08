@@ -1,9 +1,9 @@
 #include <stdio.h>
 
 /*
-nasm -f elf32 cos.asm -o cos.o
-gcc -m32 cos.c cos.o -o cos.exe
-./cos.exe
+nasm -f elf32 projekt.asm -o projekt.o
+gcc -m32 projekt.c projekt.o -o projekt.exe
+./projekt.exe
 */
 
 #define MAX_VAL(type) ((type)((1U << (sizeof(type) * 8 - 1)) - 1))
