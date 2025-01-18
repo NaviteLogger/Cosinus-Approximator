@@ -14,7 +14,7 @@ tanh_asm:
     mov ecx, n
 
     finit ; Init FPU
-    fldz ; push 1 (initial return value)
+    fld1 ; push 1 (initial return value)
 
     jmp exp_loop
 
@@ -35,9 +35,9 @@ exp_loop:
 
 return:
     ; Compute the actual e^2x - 1 / e^2x + 1
-    fadd dword [one]
+    fsub dword [one]
     fld st0            ; duplicate => ST(0)= e^(2*x)-1, ST(1)= e^(2*x)-1
-    fsub dword [two]       ; ST(0)= (e^(2*x)-1)+2 = e^(2*x)+1
+    fadd dword [two]       ; ST(0)= (e^(2*x)-1)+2 = e^(2*x)+1
 
     ; st(0)=denominator, st(1)=numerator => do st(1)/st(0)
     fdivp st1, st0     ; => st(1) = ( e^(2*x)-1 ) / ( e^(2*x)+1 ), pop st(0)
