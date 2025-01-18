@@ -14,7 +14,8 @@ void clearInvalidInput() {
     ;
 }
 
-extern float cos_asm(float x, int accuracy) asm("cos_asm");
+// extern float cos_asm(float x, int accuracy) asm("cos_asm");
+extern float tanh_asm(float x, int accuracy) asm("tanh_asm");
 
 int main() {
   printf("Kalkulator funkcji cos(x) z wykorzystaniem rozwinięcia w szereg "
@@ -44,7 +45,7 @@ int main() {
       continue;
     }
 
-    float result = cos_asm(x, 20);
+    float result = tanh_asm(x, 20);
     printf("cos(x) = ~%.*f\n", accuracy, result);
 
     printf("Czy kontynuować? (y/n) ");
